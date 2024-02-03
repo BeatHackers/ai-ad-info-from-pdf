@@ -11,7 +11,7 @@ function calculateAreasWithPython(imagePaths) {
         const pythonProcess = spawn('python', ['calculation.py', ...imagePaths]);
 
         pythonProcess.stdout.on('data', (data) => {
-            resolve(data.toString());
+            console.log(data.toString());
         });
 
         pythonProcess.stderr.on('data', (data) => {
