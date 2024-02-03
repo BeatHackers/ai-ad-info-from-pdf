@@ -6,42 +6,38 @@ const { spawn } = require('child_process');
 const path = require('path');
 const axios = require('axios');
 
-// Convert PDF to images
-async function convertPdfToImages(pdfPath) {
-    let opts = {
-        format: 'jpeg',
-        out_dir: './output/images',
-        out_prefix: 'page',
-        page: null // Convert all pages
-    };
-
-    try {
-        await util.promisify(calculateAreasWithPython)(pdfPath, opts);
-        console.log('PDF converted to images successfully.');
-    } catch (error) {
-        console.error('Error converting PDF to images:', error);
-    }
-}
-
 // Function to run the Python script and get the sum of areas
 function calculateAreasWithPython(imagePaths) {
-    return new Promise((resolve, reject) => {
-        const pythonProcess = spawn('python', ['calculate_areas.py', ...imagePaths]);
+        const pythonProcess = spawn('python', ['calculation.py', ...imagePaths]);
 
         pythonProcess.stdout.on('data', (data) => {
             resolve(data.toString());
         });
 
         pythonProcess.stderr.on('data', (data) => {
-            reject(data.toString());
+            console.log(data.toString());
         });
-    });
+}
+
+async function convertPdfToImages() {
+    console.log('1');
+        const pythonProcess = spawn('python', ['convertPdfToImages.py', './input/input.pdf']);
+
+        pythonProcess.stdout.on('data', (data) => {
+            console.log(data.toString());
+            resolve();
+        });
+
+        pythonProcess.stderr.on('data', (data) => {
+            console.error(data.toString());
+            reject();
+        });
 }
 
 // Function to get image paths from a directory
 function getImagePaths(directory) {
     return fs.readdirSync(directory)
-        .filter(file => file.endsWith('.jpeg')) // Adjust based on your image format
+        .filter(file => file.endsWith('.jpg'))
         .map(file => path.join(directory, file));
 }
 
@@ -74,17 +70,11 @@ async function main() {
     const pdfPath = './input/input.pdf';
 
     await convertPdfToImages(pdfPath);
-    const imagePaths = getImagePaths('./output/images');
+    const imagePaths = getImagePaths('./input/output/');
+    console.log(imagePaths);
     const sumOfAreas = await calculateAreasWithPython(imagePaths);
+    console.log('0');
     
-    // Call the API to get the rows
-    try {
-        const response = await axios.post('http://localhost:3000/api/llms', { imagePaths });
-        const rows = response.data;
-        await writeResultsToExcel(sumOfAreas, rows);
-    } catch (error) {
-        console.error('Error calling the API:', error);
-    }
 }
 
 main().catch(console.error);
